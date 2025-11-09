@@ -5899,207 +5899,726 @@ function Fatality.new(Window: Window)
 			InfoButton.MouseButton1Click:Connect(callback);
 		end;
 
-		-- Settings Menu Tab
-		local SettingsMenuTab = nil;
-		local SettingsMenuCreated = false;
+		-- Settings Config Page
+		local ConfigPageFrame = Instance.new("Frame")
+		local ConfigPageStroke = Instance.new("UIStroke")
+		local ConfigPageCorner = Instance.new("UICorner")
+		local ConfigPageShadow = Instance.new("ImageLabel")
+		local ConfigPageScale = UDim2.new(0, 450, 0, 350);
 		local ConfigNameInput = nil;
+		local ConfigListScrolling = nil;
+		local AutoLoadToggle = nil;
+		local AutoLoadEnabled = false;
+		local SelectedConfig = nil;
+		local ConfigDirectory = "Fatality/Config";
 
-		SettingsButton.MouseButton1Click:Connect(function()
-			if not SettingsMenuCreated then
-				SettingsMenuCreated = true;
-				
-				-- Create Settings menu tab
-				SettingsMenuTab = Fatal:AddMenu({
-					Name = "Settings",
-					Icon = "settings",
-					AutoFill = false
+		Fatality:AddDragBlacklist(ConfigPageFrame);
+
+		local RefreshConfigList = nil; -- Will be defined after ConfigListScrolling is created
+		local ConfigPageToggle = nil; -- Will be defined after all elements are created
+
+		ConfigPageFrame.Name = Fatality:RandomString()
+		ConfigPageFrame.Parent = Fatalitywin;
+		ConfigPageFrame.AnchorPoint = Vector2.new(0, 1)
+		ConfigPageFrame.BackgroundColor3 = Color3.fromRGB(19, 19, 19)
+		ConfigPageFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigPageFrame.BorderSizePixel = 0
+		ConfigPageFrame.Position = UDim2.new(4, 0, 4, 0)
+		ConfigPageFrame.Size = ConfigPageScale
+		ConfigPageFrame.ZIndex = 100
+		ConfigPageFrame.ClipsDescendants = true
+		ConfigPageFrame:SetAttribute("ConfigPageElement", true)
+
+		ConfigPageStroke.Color = Color3.fromRGB(29, 29, 29)
+		ConfigPageStroke.Parent = ConfigPageFrame
+
+		ConfigPageCorner.CornerRadius = UDim.new(0, 2)
+		ConfigPageCorner.Parent = ConfigPageFrame
+
+		ConfigPageShadow.Name = Fatality:RandomString()
+		ConfigPageShadow.Parent = ConfigPageFrame
+		ConfigPageShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+		ConfigPageShadow.BackgroundTransparency = 1.000
+		ConfigPageShadow.BorderSizePixel = 0
+		ConfigPageShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+		ConfigPageShadow.Rotation = 0.010
+		ConfigPageShadow.Size = UDim2.new(1, 47, 1, 47)
+		ConfigPageShadow.ZIndex = 99
+		ConfigPageShadow.Image = "rbxassetid://6014261993"
+		ConfigPageShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigPageShadow.ImageTransparency = 0.750
+		ConfigPageShadow.ScaleType = Enum.ScaleType.Slice
+		ConfigPageShadow.SliceCenter = Rect.new(49, 49, 450, 450)
+
+		-- Title
+		local ConfigPageTitle = Instance.new("TextLabel")
+		ConfigPageTitle.Name = Fatality:RandomString()
+		ConfigPageTitle.Parent = ConfigPageFrame
+		ConfigPageTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigPageTitle.BackgroundTransparency = 1.000
+		ConfigPageTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigPageTitle.BorderSizePixel = 0
+		ConfigPageTitle.Position = UDim2.new(0, 15, 0, 10)
+		ConfigPageTitle.Size = UDim2.new(0.5, -15, 0, 20)
+		ConfigPageTitle.ZIndex = 101
+		ConfigPageTitle.FontFace = Fatality.FontSemiBold
+		ConfigPageTitle.Text = "Config Manager"
+		ConfigPageTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigPageTitle.TextSize = 16.000
+		ConfigPageTitle.TextXAlignment = Enum.TextXAlignment.Left
+		ConfigPageTitle.TextTransparency = 0.2
+		ConfigPageTitle:SetAttribute("ConfigPageElement", true)
+
+		-- Config Name Input
+		local ConfigNameLabel = Instance.new("TextLabel")
+		local ConfigNameBox = Instance.new("Frame")
+		local ConfigNameInputBox = Instance.new("TextBox")
+		local ConfigNameCorner = Instance.new("UICorner")
+		local ConfigNameStroke = Instance.new("UIStroke")
+
+		ConfigNameLabel.Name = Fatality:RandomString()
+		ConfigNameLabel.Parent = ConfigPageFrame
+		ConfigNameLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigNameLabel.BackgroundTransparency = 1.000
+		ConfigNameLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigNameLabel.BorderSizePixel = 0
+		ConfigNameLabel.Position = UDim2.new(0, 15, 0, 40)
+		ConfigNameLabel.Size = UDim2.new(0.5, -20, 0, 15)
+		ConfigNameLabel.ZIndex = 101
+		ConfigNameLabel.FontFace = Fatality.FontSemiBold
+		ConfigNameLabel.Text = "Config Name"
+		ConfigNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigNameLabel.TextSize = 12.000
+		ConfigNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+		ConfigNameLabel.TextTransparency = 0.300
+		ConfigNameLabel:SetAttribute("ConfigPageElement", true)
+
+		ConfigNameBox.Name = Fatality:RandomString()
+		ConfigNameBox.Parent = ConfigPageFrame
+		ConfigNameBox.BackgroundColor3 = Fatality.Colors.Black
+		ConfigNameBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigNameBox.BorderSizePixel = 0
+		ConfigNameBox.Position = UDim2.new(0, 15, 0, 58)
+		ConfigNameBox.Size = UDim2.new(0.5, -20, 0, 25)
+		ConfigNameBox.ZIndex = 101
+		ConfigNameBox:SetAttribute("ConfigPageElement", true)
+
+		ConfigNameCorner.CornerRadius = UDim.new(0, 2)
+		ConfigNameCorner.Parent = ConfigNameBox
+
+		ConfigNameStroke.Transparency = 0.750
+		ConfigNameStroke.Color = Color3.fromRGB(29, 29, 29)
+		ConfigNameStroke.Parent = ConfigNameBox
+
+		ConfigNameInputBox.Name = Fatality:RandomString()
+		ConfigNameInputBox.Parent = ConfigNameBox
+		ConfigNameInputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigNameInputBox.BackgroundTransparency = 1.000
+		ConfigNameInputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigNameInputBox.BorderSizePixel = 0
+		ConfigNameInputBox.Position = UDim2.new(0.5, 0, 0.5, 0)
+		ConfigNameInputBox.Size = UDim2.new(1, -10, 1, -2)
+		ConfigNameInputBox.ZIndex = 102
+		ConfigNameInputBox.ClearTextOnFocus = false
+		ConfigNameInputBox.FontFace = Fatality.FontSemiBold
+		ConfigNameInputBox.PlaceholderText = "Enter config name"
+		ConfigNameInputBox.Text = ""
+		ConfigNameInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigNameInputBox.TextSize = 12.000
+		ConfigNameInputBox.TextXAlignment = Enum.TextXAlignment.Left
+		ConfigNameInputBox.TextTransparency = 0
+		ConfigNameInputBox:SetAttribute("ConfigPageElement", true)
+
+		ConfigNameInput = ConfigNameInputBox;
+
+		-- Buttons Container
+		local ButtonsContainer = Instance.new("Frame")
+		ButtonsContainer.Name = Fatality:RandomString()
+		ButtonsContainer.Parent = ConfigPageFrame
+		ButtonsContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ButtonsContainer.BackgroundTransparency = 1.000
+		ButtonsContainer.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ButtonsContainer.BorderSizePixel = 0
+		ButtonsContainer.Position = UDim2.new(0, 15, 0, 90)
+		ButtonsContainer.Size = UDim2.new(0.5, -20, 0, 100)
+		ButtonsContainer.ZIndex = 101
+
+		-- Save Button
+		local SaveConfigBtn = Instance.new("Frame")
+		local SaveConfigBtnLabel = Instance.new("TextLabel")
+		local SaveConfigBtnButton = Instance.new("TextButton")
+		local SaveConfigBtnCorner = Instance.new("UICorner")
+		local SaveConfigBtnStroke = Instance.new("UIStroke")
+
+		SaveConfigBtn.Name = Fatality:RandomString()
+		SaveConfigBtn.Parent = ButtonsContainer
+		SaveConfigBtn.BackgroundColor3 = Fatality.Colors.Black
+		SaveConfigBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		SaveConfigBtn.BorderSizePixel = 0
+		SaveConfigBtn.Position = UDim2.new(0, 0, 0, 0)
+		SaveConfigBtn.Size = UDim2.new(1, 0, 0, 25)
+		SaveConfigBtn.ZIndex = 102
+		SaveConfigBtn:SetAttribute("ConfigPageElement", true)
+
+		SaveConfigBtnCorner.CornerRadius = UDim.new(0, 2)
+		SaveConfigBtnCorner.Parent = SaveConfigBtn
+
+		SaveConfigBtnStroke.Transparency = 0.750
+		SaveConfigBtnStroke.Color = Color3.fromRGB(29, 29, 29)
+		SaveConfigBtnStroke.Parent = SaveConfigBtn
+
+		SaveConfigBtnLabel.Name = Fatality:RandomString()
+		SaveConfigBtnLabel.Parent = SaveConfigBtn
+		SaveConfigBtnLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		SaveConfigBtnLabel.BackgroundTransparency = 1.000
+		SaveConfigBtnLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		SaveConfigBtnLabel.BorderSizePixel = 0
+		SaveConfigBtnLabel.Size = UDim2.new(1, 0, 1, 0)
+		SaveConfigBtnLabel.ZIndex = 103
+		SaveConfigBtnLabel.FontFace = Fatality.FontSemiBold
+		SaveConfigBtnLabel.Text = "Save Config"
+		SaveConfigBtnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		SaveConfigBtnLabel.TextSize = 12.000
+		SaveConfigBtnLabel.TextTransparency = 0.400
+		SaveConfigBtnLabel:SetAttribute("ConfigPageElement", true)
+
+		SaveConfigBtnButton.Name = Fatality:RandomString()
+		SaveConfigBtnButton.Parent = SaveConfigBtn
+		SaveConfigBtnButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		SaveConfigBtnButton.BackgroundTransparency = 1.000
+		SaveConfigBtnButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		SaveConfigBtnButton.BorderSizePixel = 0
+		SaveConfigBtnButton.Size = UDim2.new(1, 0, 1, 0)
+		SaveConfigBtnButton.ZIndex = 104
+		SaveConfigBtnButton.Text = ""
+		SaveConfigBtnButton.TextTransparency = 1
+
+		Fatality:CreateHover(SaveConfigBtn, function(bool)
+			if bool then
+				Fatality:CreateAnimation(SaveConfigBtn, 0.3, {
+					BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+				})
+				Fatality:CreateAnimation(SaveConfigBtnLabel, 0.3, {
+					TextTransparency = 0.2
+				})
+			else
+				Fatality:CreateAnimation(SaveConfigBtn, 0.3, {
+					BackgroundColor3 = Fatality.Colors.Black
+				})
+				Fatality:CreateAnimation(SaveConfigBtnLabel, 0.3, {
+					TextTransparency = 0.400
+				})
+			end
+		end)
+
+		SaveConfigBtnButton.MouseButton1Click:Connect(function()
+			local configName = ConfigNameInput.Text;
+			if not configName or configName == "" then
+				Fatal.Notifier:Notify({
+					Title = "Config",
+					Content = "Please enter a config name",
+					Icon = "alert-circle",
+					Duration = 3,
 				});
+				return;
+			end
 
-				-- Find the Left ScrollingFrame by position (X = 0.175)
-				local SettingsLeft = nil;
-				for _, child in pairs(SettingsMenuTab.Root:GetChildren()) do
-					if child:IsA("ScrollingFrame") and math.abs(child.Position.X.Scale - 0.175) < 0.01 then
-						SettingsLeft = child;
-						break;
-					end
-				end
+			local flags = Fatal:GetFlagConfig();
+			local HttpService = game:GetService('HttpService');
 
-				if SettingsLeft then
-					-- Add Config Name Input Box first (so it appears at the top)
-					local ConfigNameFrame = Instance.new("Frame")
-					local ConfigNameLabel = Instance.new("TextLabel")
-					local ConfigNameBox = Instance.new("Frame")
-					local ConfigNameInputBox = Instance.new("TextBox")
-					local UICorner_Box = Instance.new("UICorner")
-					local UIStroke_Box = Instance.new("UIStroke")
+			local configPath = ConfigDirectory .. "/" .. configName .. ".cfg";
+			local code = HttpService:JSONEncode(flags);
 
-					ConfigNameFrame.Name = Fatality:RandomString()
-					ConfigNameFrame.Parent = SettingsLeft
-					ConfigNameFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					ConfigNameFrame.BackgroundTransparency = 1.000
-					ConfigNameFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					ConfigNameFrame.BorderSizePixel = 0
-					ConfigNameFrame.Size = UDim2.new(1, 0, 0, 50)
-					ConfigNameFrame.ZIndex = 10
+			writefile(configPath, code);
 
-					ConfigNameLabel.Name = Fatality:RandomString()
-					ConfigNameLabel.Parent = ConfigNameFrame
-					ConfigNameLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					ConfigNameLabel.BackgroundTransparency = 1.000
-					ConfigNameLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					ConfigNameLabel.BorderSizePixel = 0
-					ConfigNameLabel.Position = UDim2.new(0, 0, 0, 5)
-					ConfigNameLabel.Size = UDim2.new(1, 0, 0, 15)
-					ConfigNameLabel.ZIndex = 11
-					ConfigNameLabel.FontFace = Fatality.FontSemiBold
-					ConfigNameLabel.Text = "Config Name"
-					ConfigNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-					ConfigNameLabel.TextSize = 13.000
-					ConfigNameLabel.TextTransparency = 0.200
-					ConfigNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+			Fatal.Notifier:Notify({
+				Title = "Config",
+				Content = "Saved config '" .. configName .. "'",
+				Icon = "settings",
+				Duration = 4,
+			});
 
-					ConfigNameBox.Name = Fatality:RandomString()
-					ConfigNameBox.Parent = ConfigNameFrame
-					ConfigNameBox.AnchorPoint = Vector2.new(0, 1)
-					ConfigNameBox.BackgroundColor3 = Fatality.Colors.Black
-					ConfigNameBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					ConfigNameBox.BorderSizePixel = 0
-					ConfigNameBox.Position = UDim2.new(0, 0, 1, 0)
-					ConfigNameBox.Size = UDim2.new(1, 0, 0, 25)
-					ConfigNameBox.ZIndex = 11
+			RefreshConfigList();
+		end)
 
-					UICorner_Box.CornerRadius = UDim.new(0, 2)
-					UICorner_Box.Parent = ConfigNameBox
+		-- Load Button
+		local LoadConfigBtn = Instance.new("Frame")
+		local LoadConfigBtnLabel = Instance.new("TextLabel")
+		local LoadConfigBtnButton = Instance.new("TextButton")
+		local LoadConfigBtnCorner = Instance.new("UICorner")
+		local LoadConfigBtnStroke = Instance.new("UIStroke")
 
-					UIStroke_Box.Transparency = 0.750
-					UIStroke_Box.Color = Color3.fromRGB(29, 29, 29)
-					UIStroke_Box.Parent = ConfigNameBox
+		LoadConfigBtn.Name = Fatality:RandomString()
+		LoadConfigBtn.Parent = ButtonsContainer
+		LoadConfigBtn.BackgroundColor3 = Fatality.Colors.Black
+		LoadConfigBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		LoadConfigBtn.BorderSizePixel = 0
+		LoadConfigBtn.Position = UDim2.new(0, 0, 0, 30)
+		LoadConfigBtn.Size = UDim2.new(1, 0, 0, 25)
+		LoadConfigBtn.ZIndex = 102
+		LoadConfigBtn:SetAttribute("ConfigPageElement", true)
 
-					ConfigNameInputBox.Name = Fatality:RandomString()
-					ConfigNameInputBox.Parent = ConfigNameBox
-					ConfigNameInputBox.AnchorPoint = Vector2.new(0.5, 0.5)
-					ConfigNameInputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					ConfigNameInputBox.BackgroundTransparency = 1.000
-					ConfigNameInputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					ConfigNameInputBox.BorderSizePixel = 0
-					ConfigNameInputBox.Position = UDim2.new(0.5, 0, 0.5, 0)
-					ConfigNameInputBox.Size = UDim2.new(1, -10, 1, -2)
-					ConfigNameInputBox.ZIndex = 12
-					ConfigNameInputBox.ClearTextOnFocus = false
-					ConfigNameInputBox.FontFace = Fatality.FontSemiBold
-					ConfigNameInputBox.PlaceholderText = "Enter config name"
-					ConfigNameInputBox.Text = ""
-					ConfigNameInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-					ConfigNameInputBox.TextSize = 12.000
-					ConfigNameInputBox.TextXAlignment = Enum.TextXAlignment.Left
+		LoadConfigBtnCorner.CornerRadius = UDim.new(0, 2)
+		LoadConfigBtnCorner.Parent = LoadConfigBtn
 
-					ConfigNameInput = ConfigNameInputBox;
+		LoadConfigBtnStroke.Transparency = 0.750
+		LoadConfigBtnStroke.Color = Color3.fromRGB(29, 29, 29)
+		LoadConfigBtnStroke.Parent = LoadConfigBtn
 
-					-- Create a section for Config management (after input box)
-					local ConfigSection = SettingsMenuTab:AddSection({
-						Name = "Config Manager",
-						Position = "left",
-						Height = 0
-					});
+		LoadConfigBtnLabel.Name = Fatality:RandomString()
+		LoadConfigBtnLabel.Parent = LoadConfigBtn
+		LoadConfigBtnLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		LoadConfigBtnLabel.BackgroundTransparency = 1.000
+		LoadConfigBtnLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		LoadConfigBtnLabel.BorderSizePixel = 0
+		LoadConfigBtnLabel.Size = UDim2.new(1, 0, 1, 0)
+		LoadConfigBtnLabel.ZIndex = 103
+		LoadConfigBtnLabel.FontFace = Fatality.FontSemiBold
+		LoadConfigBtnLabel.Text = "Load Config"
+		LoadConfigBtnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		LoadConfigBtnLabel.TextSize = 12.000
+		LoadConfigBtnLabel.TextTransparency = 0.400
+		LoadConfigBtnLabel:SetAttribute("ConfigPageElement", true)
 
-					-- Save Config Button
-					ConfigSection:AddButton({
-						Name = "Save Config",
-						Callback = function()
-							local configName = ConfigNameInput.Text;
-							if not configName or configName == "" then
-								Fatal.Notifier:Notify({
-									Title = "Config",
-									Content = "Please enter a config name",
-									Icon = "alert-circle",
-									Duration = 3,
-								});
-								return;
-							end
+		LoadConfigBtnButton.Name = Fatality:RandomString()
+		LoadConfigBtnButton.Parent = LoadConfigBtn
+		LoadConfigBtnButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		LoadConfigBtnButton.BackgroundTransparency = 1.000
+		LoadConfigBtnButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		LoadConfigBtnButton.BorderSizePixel = 0
+		LoadConfigBtnButton.Size = UDim2.new(1, 0, 1, 0)
+		LoadConfigBtnButton.ZIndex = 104
+		LoadConfigBtnButton.Text = ""
+		LoadConfigBtnButton.TextTransparency = 1
 
-							local flags = Fatal:GetFlagConfig();
-							local HttpService = game:GetService('HttpService');
-							
-							-- Create config directory if it doesn't exist
-							if not isfolder("Fatality") then
-								makefolder("Fatality");
-							end
-							if not isfolder("Fatality/Config") then
-								makefolder("Fatality/Config");
-							end
+		Fatality:CreateHover(LoadConfigBtn, function(bool)
+			if bool then
+				Fatality:CreateAnimation(LoadConfigBtn, 0.3, {
+					BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+				})
+				Fatality:CreateAnimation(LoadConfigBtnLabel, 0.3, {
+					TextTransparency = 0.2
+				})
+			else
+				Fatality:CreateAnimation(LoadConfigBtn, 0.3, {
+					BackgroundColor3 = Fatality.Colors.Black
+				})
+				Fatality:CreateAnimation(LoadConfigBtnLabel, 0.3, {
+					TextTransparency = 0.400
+				})
+			end
+		end)
 
-							local configPath = "Fatality/Config/" .. configName .. ".cfg";
-							local code = HttpService:JSONEncode(flags);
-							
-							writefile(configPath, code);
+		LoadConfigBtnButton.MouseButton1Click:Connect(function()
+			local configName = ConfigNameInput.Text;
+			if not configName or configName == "" then
+				Fatal.Notifier:Notify({
+					Title = "Config",
+					Content = "Please enter a config name",
+					Icon = "alert-circle",
+					Duration = 3,
+				});
+				return;
+			end
 
-							Fatal.Notifier:Notify({
-								Title = "Config",
-								Content = "Saved config '" .. configName .. "'",
-								Icon = "settings",
-								Duration = 4,
-							});
+			local configPath = ConfigDirectory .. "/" .. configName .. ".cfg";
 
-							ConfigNameInput.Text = "";
-						end,
-						Risky = false
-					});
+			if isfile(configPath) then
+				local HttpService = game:GetService('HttpService');
+				local decoded = HttpService:JSONDecode(readfile(configPath));
 
-					-- Load Config Button
-					ConfigSection:AddButton({
-						Name = "Load Config",
-						Callback = function()
-							local configName = ConfigNameInput.Text;
-							if not configName or configName == "" then
-								Fatal.Notifier:Notify({
-									Title = "Config",
-									Content = "Please enter a config name",
-									Icon = "alert-circle",
-									Duration = 3,
-								});
-								return;
-							end
+				Fatal:LoadConfig(decoded);
 
-							local configPath = "Fatality/Config/" .. configName .. ".cfg";
-							
-							if isfile(configPath) then
-								local HttpService = game:GetService('HttpService');
-								local decoded = HttpService:JSONDecode(readfile(configPath));
-								
-								Fatal:LoadConfig(decoded);
+				Fatal.Notifier:Notify({
+					Title = "Config",
+					Content = "Loaded config '" .. configName .. "'",
+					Icon = "settings",
+					Duration = 4,
+				});
+			else
+				Fatal.Notifier:Notify({
+					Title = "Config",
+					Content = "Config '" .. configName .. "' not found",
+					Icon = "alert-circle",
+					Duration = 3,
+				});
+			end
+		end)
 
-								Fatal.Notifier:Notify({
-									Title = "Config",
-									Content = "Loaded config '" .. configName .. "'",
-									Icon = "settings",
-									Duration = 4,
-								});
-							else
-								Fatal.Notifier:Notify({
-									Title = "Config",
-									Content = "Config '" .. configName .. "' not found",
-									Icon = "alert-circle",
-									Duration = 3,
-								});
-							end
-						end,
-						Risky = false
-					});
+		-- Auto Load Toggle
+		local AutoLoadToggleFrame = Instance.new("Frame")
+		local AutoLoadToggleLabel = Instance.new("TextLabel")
+		local AutoLoadToggleButton = Instance.new("TextButton")
+		local AutoLoadToggleBox = Instance.new("Frame")
+		local AutoLoadToggleIndicator = Instance.new("Frame")
+		local AutoLoadToggleCorner = Instance.new("UICorner")
+		local AutoLoadToggleIndicatorCorner = Instance.new("UICorner")
+
+		AutoLoadToggleFrame.Name = Fatality:RandomString()
+		AutoLoadToggleFrame.Parent = ButtonsContainer
+		AutoLoadToggleFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		AutoLoadToggleFrame.BackgroundTransparency = 1.000
+		AutoLoadToggleFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		AutoLoadToggleFrame.BorderSizePixel = 0
+		AutoLoadToggleFrame.Position = UDim2.new(0, 0, 0, 60)
+		AutoLoadToggleFrame.Size = UDim2.new(1, 0, 0, 25)
+		AutoLoadToggleFrame.ZIndex = 102
+
+		AutoLoadToggleLabel.Name = Fatality:RandomString()
+		AutoLoadToggleLabel.Parent = AutoLoadToggleFrame
+		AutoLoadToggleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		AutoLoadToggleLabel.BackgroundTransparency = 1.000
+		AutoLoadToggleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		AutoLoadToggleLabel.BorderSizePixel = 0
+		AutoLoadToggleLabel.Position = UDim2.new(0, 0, 0, 0)
+		AutoLoadToggleLabel.Size = UDim2.new(1, -35, 1, 0)
+		AutoLoadToggleLabel.ZIndex = 103
+		AutoLoadToggleLabel.FontFace = Fatality.FontSemiBold
+		AutoLoadToggleLabel.Text = "Auto Load"
+		AutoLoadToggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		AutoLoadToggleLabel.TextSize = 12.000
+		AutoLoadToggleLabel.TextTransparency = 0.400
+		AutoLoadToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+		AutoLoadToggleLabel:SetAttribute("ConfigPageElement", true)
+
+		AutoLoadToggleBox.Name = Fatality:RandomString()
+		AutoLoadToggleBox.Parent = AutoLoadToggleFrame
+		AutoLoadToggleBox.AnchorPoint = Vector2.new(1, 0.5)
+		AutoLoadToggleBox.BackgroundColor3 = Fatality.Colors.Black
+		AutoLoadToggleBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		AutoLoadToggleBox.BorderSizePixel = 0
+		AutoLoadToggleBox.Position = UDim2.new(1, 0, 0.5, 0)
+		AutoLoadToggleBox.Size = UDim2.new(0, 30, 0, 15)
+		AutoLoadToggleBox.ZIndex = 103
+		AutoLoadToggleBox:SetAttribute("ConfigPageElement", true)
+
+		AutoLoadToggleCorner.CornerRadius = UDim.new(0, 7)
+		AutoLoadToggleCorner.Parent = AutoLoadToggleBox
+
+		AutoLoadToggleIndicator.Name = Fatality:RandomString()
+		AutoLoadToggleIndicator.Parent = AutoLoadToggleBox
+		AutoLoadToggleIndicator.AnchorPoint = Vector2.new(0, 0.5)
+		AutoLoadToggleIndicator.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+		AutoLoadToggleIndicator.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		AutoLoadToggleIndicator.BorderSizePixel = 0
+		AutoLoadToggleIndicator.Position = UDim2.new(0, 2, 0.5, 0)
+		AutoLoadToggleIndicator.Size = UDim2.new(0, 11, 0, 11)
+		AutoLoadToggleIndicator.ZIndex = 104
+
+		AutoLoadToggleIndicatorCorner.CornerRadius = UDim.new(1, 0)
+		AutoLoadToggleIndicatorCorner.Parent = AutoLoadToggleIndicator
+
+		AutoLoadToggleButton.Name = Fatality:RandomString()
+		AutoLoadToggleButton.Parent = AutoLoadToggleFrame
+		AutoLoadToggleButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		AutoLoadToggleButton.BackgroundTransparency = 1.000
+		AutoLoadToggleButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		AutoLoadToggleButton.BorderSizePixel = 0
+		AutoLoadToggleButton.Size = UDim2.new(1, 0, 1, 0)
+		AutoLoadToggleButton.ZIndex = 105
+		AutoLoadToggleButton.Text = ""
+		AutoLoadToggleButton.TextTransparency = 1
+
+		local function UpdateAutoLoadToggle(value)
+			AutoLoadEnabled = value;
+			if value then
+				Fatality:CreateAnimation(AutoLoadToggleIndicator, 0.3, {
+					Position = UDim2.new(1, -13, 0.5, 0),
+					BackgroundColor3 = Fatality.Colors.Main
+				})
+				Fatality:CreateAnimation(AutoLoadToggleBox, 0.3, {
+					BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+				})
+			else
+				Fatality:CreateAnimation(AutoLoadToggleIndicator, 0.3, {
+					Position = UDim2.new(0, 2, 0.5, 0),
+					BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+				})
+				Fatality:CreateAnimation(AutoLoadToggleBox, 0.3, {
+					BackgroundColor3 = Fatality.Colors.Black
+				})
+			end
+		end
+
+		AutoLoadToggleButton.MouseButton1Click:Connect(function()
+			UpdateAutoLoadToggle(not AutoLoadEnabled);
+		end)
+
+		AutoLoadToggle = UpdateAutoLoadToggle;
+
+		-- Config List (Right Side)
+		local ConfigListLabel = Instance.new("TextLabel")
+		local ConfigListFrame = Instance.new("Frame")
+		local ConfigListScrollingFrame = Instance.new("ScrollingFrame")
+		local ConfigListUIListLayout = Instance.new("UIListLayout")
+		local ConfigListCorner = Instance.new("UICorner")
+		local ConfigListStroke = Instance.new("UIStroke")
+
+		ConfigListLabel.Name = Fatality:RandomString()
+		ConfigListLabel.Parent = ConfigPageFrame
+		ConfigListLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigListLabel.BackgroundTransparency = 1.000
+		ConfigListLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigListLabel.BorderSizePixel = 0
+		ConfigListLabel.Position = UDim2.new(0.55, 0, 0, 10)
+		ConfigListLabel.Size = UDim2.new(0.4, -15, 0, 20)
+		ConfigListLabel.ZIndex = 101
+		ConfigListLabel.FontFace = Fatality.FontSemiBold
+		ConfigListLabel.Text = "Configs"
+		ConfigListLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigListLabel.TextSize = 16.000
+		ConfigListLabel.TextXAlignment = Enum.TextXAlignment.Left
+		ConfigListLabel.TextTransparency = 0.2
+		ConfigListLabel:SetAttribute("ConfigPageElement", true)
+
+		ConfigListFrame.Name = Fatality:RandomString()
+		ConfigListFrame.Parent = ConfigPageFrame
+		ConfigListFrame.BackgroundColor3 = Fatality.Colors.Black
+		ConfigListFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigListFrame.BorderSizePixel = 0
+		ConfigListFrame.Position = UDim2.new(0.55, 0, 0, 35)
+		ConfigListFrame.Size = UDim2.new(0.4, -15, 1, -40)
+		ConfigListFrame.ZIndex = 101
+		ConfigListFrame:SetAttribute("ConfigPageElement", true)
+
+		ConfigListCorner.CornerRadius = UDim.new(0, 2)
+		ConfigListCorner.Parent = ConfigListFrame
+
+		ConfigListStroke.Transparency = 0.750
+		ConfigListStroke.Color = Color3.fromRGB(29, 29, 29)
+		ConfigListStroke.Parent = ConfigListFrame
+
+		ConfigListScrollingFrame.Name = Fatality:RandomString()
+		ConfigListScrollingFrame.Parent = ConfigListFrame
+		ConfigListScrollingFrame.Active = true
+		ConfigListScrollingFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigListScrollingFrame.BackgroundTransparency = 1.000
+		ConfigListScrollingFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigListScrollingFrame.BorderSizePixel = 0
+		ConfigListScrollingFrame.Position = UDim2.new(0, 5, 0, 5)
+		ConfigListScrollingFrame.Size = UDim2.new(1, -10, 1, -10)
+		ConfigListScrollingFrame.ZIndex = 102
+		ConfigListScrollingFrame.ScrollBarThickness = 0
+		ConfigListScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+		ConfigListUIListLayout.Parent = ConfigListScrollingFrame
+		ConfigListUIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		ConfigListUIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+		ConfigListUIListLayout.Padding = UDim.new(0, 5)
+
+		ConfigListUIListLayout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
+			ConfigListScrollingFrame.CanvasSize = UDim2.fromOffset(0, ConfigListUIListLayout.AbsoluteContentSize.Y + 10)
+		end)
+
+		ConfigListScrolling = ConfigListScrollingFrame;
+
+		-- Define RefreshConfigList function after ConfigListScrolling is created
+		RefreshConfigList = function()
+			if not ConfigListScrolling then return end;
+			
+			-- Clear existing list items
+			for _, child in pairs(ConfigListScrolling:GetChildren()) do
+				if child:IsA("Frame") and child.Name ~= "UIListLayout" then
+					child:Destroy();
 				end
 			end
 
-			-- Switch to Settings menu
-			if SettingsMenuTab then
-				for i, v in next, Fatal.Menus do
-					if v.Root == SettingsMenuTab.Root then
-						Fatal.MenuSelected = v;
-						v.ValueSelect(true);
+			-- Create config directory if it doesn't exist
+			if not isfolder("Fatality") then
+				makefolder("Fatality");
+			end
+			if not isfolder(ConfigDirectory) then
+				makefolder(ConfigDirectory);
+			end
+
+			-- List all .cfg files
+			local configFiles = {};
+			local success, files = pcall(function()
+				return listfiles(ConfigDirectory);
+			end);
+			
+			if success and files then
+				for i, v in next, files do
+					local spl = string.split(v, '/');
+					local name = spl[#spl];
+					if string.find(name, ".cfg", 1, true) then
+						-- Remove .cfg extension
+						local configName = string.gsub(name, ".cfg", "");
+						table.insert(configFiles, configName);
+					end
+				end
+			end
+
+			-- Create list items
+			for _, configName in pairs(configFiles) do
+				local ConfigItem = Instance.new("Frame")
+				local UICorner_Item = Instance.new("UICorner")
+				local ConfigItemName = Instance.new("TextLabel")
+				local ConfigItemButton = Instance.new("TextButton")
+
+				ConfigItem.Name = Fatality:RandomString()
+				ConfigItem.Parent = ConfigListScrolling
+				ConfigItem.BackgroundColor3 = Fatality.Colors.Black
+				ConfigItem.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				ConfigItem.BorderSizePixel = 0
+				ConfigItem.Size = UDim2.new(1, -10, 0, 30)
+				ConfigItem.ZIndex = 105
+
+				UICorner_Item.CornerRadius = UDim.new(0, 2)
+				UICorner_Item.Parent = ConfigItem
+
+				ConfigItemName.Name = Fatality:RandomString()
+				ConfigItemName.Parent = ConfigItem
+				ConfigItemName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				ConfigItemName.BackgroundTransparency = 1.000
+				ConfigItemName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				ConfigItemName.BorderSizePixel = 0
+				ConfigItemName.Position = UDim2.new(0, 8, 0, 0)
+				ConfigItemName.Size = UDim2.new(1, -8, 1, 0)
+				ConfigItemName.ZIndex = 106
+				ConfigItemName.FontFace = Fatality.FontSemiBold
+				ConfigItemName.Text = configName
+				ConfigItemName.TextColor3 = Color3.fromRGB(255, 255, 255)
+				ConfigItemName.TextSize = 12.000
+				ConfigItemName.TextXAlignment = Enum.TextXAlignment.Left
+				ConfigItemName.TextTransparency = (SelectedConfig == configName and 0) or 0.300
+
+				ConfigItemButton.Name = Fatality:RandomString()
+				ConfigItemButton.Parent = ConfigItem
+				ConfigItemButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				ConfigItemButton.BackgroundTransparency = 1.000
+				ConfigItemButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				ConfigItemButton.BorderSizePixel = 0
+				ConfigItemButton.Size = UDim2.new(1, 0, 1, 0)
+				ConfigItemButton.ZIndex = 107
+				ConfigItemButton.Text = ""
+				ConfigItemButton.TextTransparency = 1
+
+				-- Update background if selected
+				if SelectedConfig == configName then
+					ConfigItem.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+				end
+
+				-- Hover effect
+				Fatality:CreateHover(ConfigItem, function(bool)
+					if bool then
+						Fatality:CreateAnimation(ConfigItem, 0.3, {
+							BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+						})
+						Fatality:CreateAnimation(ConfigItemName, 0.3, {
+							TextTransparency = 0
+						})
 					else
-						v.ValueSelect(false);
-					end;
-				end;
-			end;
-		end);
+						if SelectedConfig == configName then
+							Fatality:CreateAnimation(ConfigItem, 0.3, {
+								BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+							})
+						else
+							Fatality:CreateAnimation(ConfigItem, 0.3, {
+								BackgroundColor3 = Fatality.Colors.Black
+							})
+						end
+						Fatality:CreateAnimation(ConfigItemName, 0.3, {
+							TextTransparency = (SelectedConfig == configName and 0) or 0.300
+						})
+					end
+				end)
+
+				-- Click to select
+				ConfigItemButton.MouseButton1Click:Connect(function()
+					SelectedConfig = configName;
+					if ConfigNameInput then
+						ConfigNameInput.Text = configName;
+					end
+					RefreshConfigList(); -- Refresh to update selection
+				end)
+			end
+
+			-- Update canvas size
+			local UIListLayout = ConfigListScrolling:FindFirstChildOfClass("UIListLayout");
+			if UIListLayout then
+				ConfigListScrolling.CanvasSize = UDim2.fromOffset(0, UIListLayout.AbsoluteContentSize.Y + 10)
+			end
+		end
+
+		-- Define ConfigPageToggle function after RefreshConfigList is created
+		ConfigPageToggle = function(value)
+			if value then
+				ConfigPageFrame.Position = UDim2.fromOffset(SettingsButton.AbsolutePosition.X - ConfigPageScale.X.Offset + SettingsButton.AbsoluteSize.X, SettingsButton.AbsolutePosition.Y + (SettingsButton.AbsoluteSize.Y * 3))
+
+				Fatality:CreateAnimation(ConfigPageFrame, 0.35, {
+					Size = ConfigPageScale
+				})
+
+				Fatality:CreateAnimation(ConfigPageShadow, 0.35, {
+					ImageTransparency = 0.750
+				})
+
+				Fatality:CreateAnimation(ConfigPageStroke, 0.5, {
+					Transparency = 0
+				})
+
+				-- Show all children
+				for _, child in pairs(ConfigPageFrame:GetDescendants()) do
+					if child:IsA("TextLabel") or child:IsA("TextBox") or child:IsA("TextButton") or child:IsA("Frame") then
+						if child:GetAttribute("ConfigPageElement") then
+							Fatality:CreateAnimation(child, 0.5, {
+								TextTransparency = (child:IsA("TextLabel") and 0.2) or (child:IsA("TextBox") and 0) or 1,
+								BackgroundTransparency = (child:IsA("Frame") and child.BackgroundTransparency < 1 and 0) or 1
+							})
+						end
+					end
+				end
+
+				if RefreshConfigList then
+					RefreshConfigList();
+				end
+			else
+				Fatality:CreateAnimation(ConfigPageStroke, 0.5, {
+					Transparency = 1
+				})
+
+				Fatality:CreateAnimation(ConfigPageFrame, 0.35, {
+					Size = UDim2.new(ConfigPageScale.X.Scale, ConfigPageScale.X.Offset, 0, 0)
+				})
+
+				Fatality:CreateAnimation(ConfigPageShadow, 0.35, {
+					ImageTransparency = 1
+				})
+
+				-- Hide all children
+				for _, child in pairs(ConfigPageFrame:GetDescendants()) do
+					if child:GetAttribute("ConfigPageElement") then
+						if child:IsA("TextLabel") or child:IsA("TextBox") then
+							Fatality:CreateAnimation(child, 0.5, {
+								TextTransparency = 1
+							})
+						elseif child:IsA("Frame") then
+							Fatality:CreateAnimation(child, 0.5, {
+								BackgroundTransparency = 1
+							})
+						end
+					end
+				end
+			end
+		end
+
+		ConfigPageToggle(false);
+
+		SettingsButton.MouseButton1Click:Connect(function()
+			local isOpen = ConfigPageFrame.Size.Y.Offset > 0;
+			ConfigPageToggle(not isOpen);
+		end)
+
+		UserInputService.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				if not Fatality:IsMouseOverFrame(ConfigPageFrame) and not Fatality:IsMouseOverFrame(SettingsButton) then
+					if ConfigPageFrame.Size.Y.Offset > 0 then
+						ConfigPageToggle(false);
+					end
+				end
+			end
+		end)
 	end;
 
 	do
