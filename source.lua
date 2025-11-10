@@ -6029,7 +6029,7 @@ function Fatality.new(Window: Window)
 		ConfigNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		ConfigNameLabel.TextSize = 12.000
 		ConfigNameLabel.TextXAlignment = Enum.TextXAlignment.Left
-		ConfigNameLabel.TextTransparency = 0.300
+		ConfigNameLabel.TextTransparency = 0.200
 		ConfigNameLabel:SetAttribute("ConfigPageElement", true)
 
 		ConfigNameBox.Name = Fatality:RandomString()
@@ -6319,7 +6319,7 @@ function Fatality.new(Window: Window)
 		AutoLoadToggleName.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		AutoLoadToggleName.BorderSizePixel = 0
 		AutoLoadToggleName.Position = UDim2.new(0, 0, 0.5, 0)
-		AutoLoadToggleName.Size = UDim2.new(1, -30, 0.800000012, 0)
+		AutoLoadToggleName.Size = UDim2.new(1, 0, 0.800000012, 0)
 		AutoLoadToggleName.ZIndex = 103
 		AutoLoadToggleName.FontFace = Fatality.FontSemiBold
 		AutoLoadToggleName.Text = "Auto Load"
@@ -6336,9 +6336,10 @@ function Fatality.new(Window: Window)
 		AutoLoadValueFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		AutoLoadValueFrame.BorderSizePixel = 0
 		AutoLoadValueFrame.Position = UDim2.new(1, -3, 0.5, 0)
-		AutoLoadValueFrame.Size = UDim2.new(0, 28, 0, 15)
+		AutoLoadValueFrame.Size = UDim2.new(0.899999976, 0, 0.899999976, 0)
+		AutoLoadValueFrame.SizeConstraint = Enum.SizeConstraint.RelativeYY
 		AutoLoadValueFrame.ZIndex = 103
-		AutoLoadValueFrame.BackgroundTransparency = 0
+		AutoLoadValueFrame.BackgroundTransparency = 1
 		AutoLoadValueFrame:SetAttribute("ConfigPageElement", true)
 
 		AutoLoadUICorner.CornerRadius = UDim.new(0, 2)
@@ -6353,7 +6354,6 @@ function Fatality.new(Window: Window)
 		AutoLoadValueIcon.BorderSizePixel = 0
 		AutoLoadValueIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
 		AutoLoadValueIcon.Size = UDim2.new(0.699999988, 0, 0.699999988, 0)
-		AutoLoadValueIcon.SizeConstraint = Enum.SizeConstraint.RelativeYY
 		AutoLoadValueIcon.ZIndex = 104
 		AutoLoadValueIcon.Image = "rbxassetid://10709790644"
 		AutoLoadValueIcon.ImageTransparency = 1
@@ -6592,9 +6592,6 @@ function Fatality.new(Window: Window)
 				-- Click to select
 				ConfigItemButton.MouseButton1Click:Connect(function()
 					SelectedConfig = configName;
-					if ConfigNameInput then
-						ConfigNameInput.Text = configName;
-					end
 					RefreshConfigList(); -- Refresh to update selection
 				end)
 			end
@@ -6642,7 +6639,7 @@ function Fatality.new(Window: Window)
 									ImageTransparency = 0.2
 								})
 							elseif child:IsA("Frame") then
-								-- Preserve toggle value frame background
+								-- Preserve toggle value frame background - make it visible
 								if child == AutoLoadValueFrame then
 									Fatality:CreateAnimation(child, 0.5, {
 										BackgroundTransparency = 0
@@ -6685,12 +6682,10 @@ function Fatality.new(Window: Window)
 								ImageTransparency = 1
 							})
 						elseif child:IsA("Frame") then
-							-- Don't hide toggle value frame background
-							if child ~= AutoLoadValueFrame then
-								Fatality:CreateAnimation(child, 0.5, {
-									BackgroundTransparency = 1
-								})
-							end
+							-- Hide all frames including toggle
+							Fatality:CreateAnimation(child, 0.5, {
+								BackgroundTransparency = 1
+							})
 						end
 					end
 				end
