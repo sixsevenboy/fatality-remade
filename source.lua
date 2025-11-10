@@ -4141,6 +4141,8 @@ function Fatality.new(Window: Window)
 		Toggle = true,
 		Signal = Instance.new('BindableEvent');
 	};
+	
+	local ConfigPageFrame = nil; -- Will be set later
 
 	Fatal.Notifier = Fatality.__NOTIFIER_CACHE or Fatality:CreateNotifier();
 
@@ -4360,6 +4362,11 @@ function Fatality.new(Window: Window)
 			Fatality:CreateAnimation(HeaderLineShadow,0.5,{
 				BackgroundTransparency = 1,
 			})
+
+			-- Close Config Page if open
+			if ConfigPageFrame and ConfigPageFrame.Size.Y.Offset > 0 then
+				ConfigPageToggle(false);
+			end
 
 			Fatality:CreateAnimation(FatalFrame,0.75,{
 				BackgroundTransparency = 1,
@@ -5900,7 +5907,7 @@ function Fatality.new(Window: Window)
 		end;
 
 		-- Settings Config Page
-		local ConfigPageFrame = Instance.new("Frame")
+		ConfigPageFrame = Instance.new("Frame")
 		local ConfigPageStroke = Instance.new("UIStroke")
 		local ConfigPageCorner = Instance.new("UICorner")
 		local ConfigPageShadow = Instance.new("ImageLabel")
@@ -5950,17 +5957,44 @@ function Fatality.new(Window: Window)
 		ConfigPageShadow.ScaleType = Enum.ScaleType.Slice
 		ConfigPageShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 
-		-- Title
+		-- Title with Icon
+		local ConfigPageTitleFrame = Instance.new("Frame")
+		ConfigPageTitleFrame.Name = Fatality:RandomString()
+		ConfigPageTitleFrame.Parent = ConfigPageFrame
+		ConfigPageTitleFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigPageTitleFrame.BackgroundTransparency = 1.000
+		ConfigPageTitleFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigPageTitleFrame.BorderSizePixel = 0
+		ConfigPageTitleFrame.Position = UDim2.new(0, 15, 0, 10)
+		ConfigPageTitleFrame.Size = UDim2.new(0.5, -15, 0, 20)
+		ConfigPageTitleFrame.ZIndex = 101
+
+		local ConfigPageTitleIcon = Instance.new("ImageLabel")
+		ConfigPageTitleIcon.Name = Fatality:RandomString()
+		ConfigPageTitleIcon.Parent = ConfigPageTitleFrame
+		ConfigPageTitleIcon.AnchorPoint = Vector2.new(0, 0.5)
+		ConfigPageTitleIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ConfigPageTitleIcon.BackgroundTransparency = 1.000
+		ConfigPageTitleIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ConfigPageTitleIcon.BorderSizePixel = 0
+		ConfigPageTitleIcon.Position = UDim2.new(0, 0, 0.5, 0)
+		ConfigPageTitleIcon.Size = UDim2.new(0, 16, 0, 16)
+		ConfigPageTitleIcon.ZIndex = 102
+		ConfigPageTitleIcon.Image = Fatality:GetIcon("folder")
+		ConfigPageTitleIcon.ImageTransparency = 0.2
+		ConfigPageTitleIcon:SetAttribute("ConfigPageElement", true)
+
 		local ConfigPageTitle = Instance.new("TextLabel")
 		ConfigPageTitle.Name = Fatality:RandomString()
-		ConfigPageTitle.Parent = ConfigPageFrame
+		ConfigPageTitle.Parent = ConfigPageTitleFrame
+		ConfigPageTitle.AnchorPoint = Vector2.new(0, 0.5)
 		ConfigPageTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		ConfigPageTitle.BackgroundTransparency = 1.000
 		ConfigPageTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		ConfigPageTitle.BorderSizePixel = 0
-		ConfigPageTitle.Position = UDim2.new(0, 15, 0, 10)
-		ConfigPageTitle.Size = UDim2.new(0.5, -15, 0, 20)
-		ConfigPageTitle.ZIndex = 101
+		ConfigPageTitle.Position = UDim2.new(0, 22, 0.5, 0)
+		ConfigPageTitle.Size = UDim2.new(1, -22, 1, 0)
+		ConfigPageTitle.ZIndex = 102
 		ConfigPageTitle.FontFace = Fatality.FontSemiBold
 		ConfigPageTitle.Text = "Config Manager"
 		ConfigPageTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -6006,7 +6040,7 @@ function Fatality.new(Window: Window)
 		ConfigNameCorner.CornerRadius = UDim.new(0, 2)
 		ConfigNameCorner.Parent = ConfigNameBox
 
-		ConfigNameStroke.Transparency = 0.750
+		ConfigNameStroke.Transparency = 0.3
 		ConfigNameStroke.Color = Color3.fromRGB(29, 29, 29)
 		ConfigNameStroke.Parent = ConfigNameBox
 
@@ -6027,7 +6061,15 @@ function Fatality.new(Window: Window)
 		ConfigNameInputBox.TextSize = 12.000
 		ConfigNameInputBox.TextXAlignment = Enum.TextXAlignment.Left
 		ConfigNameInputBox.TextTransparency = 0
+		ConfigNameInputBox.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
 		ConfigNameInputBox:SetAttribute("ConfigPageElement", true)
+		
+		-- Ensure text is visible when typing
+		ConfigNameInputBox:GetPropertyChangedSignal("Text"):Connect(function()
+			if ConfigNameInputBox.TextTransparency > 0 then
+				ConfigNameInputBox.TextTransparency = 0
+			end
+		end)
 
 		ConfigNameInput = ConfigNameInputBox;
 
@@ -6063,7 +6105,7 @@ function Fatality.new(Window: Window)
 		SaveConfigBtnCorner.CornerRadius = UDim.new(0, 2)
 		SaveConfigBtnCorner.Parent = SaveConfigBtn
 
-		SaveConfigBtnStroke.Transparency = 0.750
+		SaveConfigBtnStroke.Transparency = 0.3
 		SaveConfigBtnStroke.Color = Color3.fromRGB(29, 29, 29)
 		SaveConfigBtnStroke.Parent = SaveConfigBtn
 
@@ -6161,7 +6203,7 @@ function Fatality.new(Window: Window)
 		LoadConfigBtnCorner.CornerRadius = UDim.new(0, 2)
 		LoadConfigBtnCorner.Parent = LoadConfigBtn
 
-		LoadConfigBtnStroke.Transparency = 0.750
+		LoadConfigBtnStroke.Transparency = 0.3
 		LoadConfigBtnStroke.Color = Color3.fromRGB(29, 29, 29)
 		LoadConfigBtnStroke.Parent = LoadConfigBtn
 
@@ -6245,14 +6287,13 @@ function Fatality.new(Window: Window)
 			end
 		end)
 
-		-- Auto Load Toggle
+		-- Auto Load Toggle (using standard toggle style)
 		local AutoLoadToggleFrame = Instance.new("Frame")
-		local AutoLoadToggleLabel = Instance.new("TextLabel")
+		local AutoLoadToggleName = Instance.new("TextLabel")
+		local AutoLoadValueFrame = Instance.new("Frame")
+		local AutoLoadUICorner = Instance.new("UICorner")
+		local AutoLoadValueIcon = Instance.new("ImageLabel")
 		local AutoLoadToggleButton = Instance.new("TextButton")
-		local AutoLoadToggleBox = Instance.new("Frame")
-		local AutoLoadToggleIndicator = Instance.new("Frame")
-		local AutoLoadToggleCorner = Instance.new("UICorner")
-		local AutoLoadToggleIndicatorCorner = Instance.new("UICorner")
 
 		AutoLoadToggleFrame.Name = Fatality:RandomString()
 		AutoLoadToggleFrame.Parent = ButtonsContainer
@@ -6261,52 +6302,56 @@ function Fatality.new(Window: Window)
 		AutoLoadToggleFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		AutoLoadToggleFrame.BorderSizePixel = 0
 		AutoLoadToggleFrame.Position = UDim2.new(0, 0, 0, 60)
-		AutoLoadToggleFrame.Size = UDim2.new(1, 0, 0, 25)
+		AutoLoadToggleFrame.Size = UDim2.new(1, 0, 0, 17)
 		AutoLoadToggleFrame.ZIndex = 102
+		AutoLoadToggleFrame:SetAttribute("ConfigPageElement", true)
 
-		AutoLoadToggleLabel.Name = Fatality:RandomString()
-		AutoLoadToggleLabel.Parent = AutoLoadToggleFrame
-		AutoLoadToggleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		AutoLoadToggleLabel.BackgroundTransparency = 1.000
-		AutoLoadToggleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		AutoLoadToggleLabel.BorderSizePixel = 0
-		AutoLoadToggleLabel.Position = UDim2.new(0, 0, 0, 0)
-		AutoLoadToggleLabel.Size = UDim2.new(1, -35, 1, 0)
-		AutoLoadToggleLabel.ZIndex = 103
-		AutoLoadToggleLabel.FontFace = Fatality.FontSemiBold
-		AutoLoadToggleLabel.Text = "Auto Load"
-		AutoLoadToggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-		AutoLoadToggleLabel.TextSize = 12.000
-		AutoLoadToggleLabel.TextTransparency = 0.400
-		AutoLoadToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-		AutoLoadToggleLabel:SetAttribute("ConfigPageElement", true)
+		AutoLoadToggleName.Name = Fatality:RandomString()
+		AutoLoadToggleName.Parent = AutoLoadToggleFrame
+		AutoLoadToggleName.AnchorPoint = Vector2.new(0, 0.5)
+		AutoLoadToggleName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		AutoLoadToggleName.BackgroundTransparency = 1.000
+		AutoLoadToggleName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		AutoLoadToggleName.BorderSizePixel = 0
+		AutoLoadToggleName.Position = UDim2.new(0, 0, 0.5, 0)
+		AutoLoadToggleName.Size = UDim2.new(1, 0, 0.800000012, 0)
+		AutoLoadToggleName.ZIndex = 103
+		AutoLoadToggleName.FontFace = Fatality.FontSemiBold
+		AutoLoadToggleName.Text = "Auto Load"
+		AutoLoadToggleName.TextColor3 = Color3.fromRGB(255, 255, 255)
+		AutoLoadToggleName.TextSize = 13.000
+		AutoLoadToggleName.TextTransparency = 0.200
+		AutoLoadToggleName.TextXAlignment = Enum.TextXAlignment.Left
+		AutoLoadToggleName:SetAttribute("ConfigPageElement", true)
 
-		AutoLoadToggleBox.Name = Fatality:RandomString()
-		AutoLoadToggleBox.Parent = AutoLoadToggleFrame
-		AutoLoadToggleBox.AnchorPoint = Vector2.new(1, 0.5)
-		AutoLoadToggleBox.BackgroundColor3 = Fatality.Colors.Black
-		AutoLoadToggleBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		AutoLoadToggleBox.BorderSizePixel = 0
-		AutoLoadToggleBox.Position = UDim2.new(1, 0, 0.5, 0)
-		AutoLoadToggleBox.Size = UDim2.new(0, 30, 0, 15)
-		AutoLoadToggleBox.ZIndex = 103
-		AutoLoadToggleBox:SetAttribute("ConfigPageElement", true)
+		AutoLoadValueFrame.Name = Fatality:RandomString()
+		AutoLoadValueFrame.Parent = AutoLoadToggleFrame
+		AutoLoadValueFrame.AnchorPoint = Vector2.new(1, 0.5)
+		AutoLoadValueFrame.BackgroundColor3 = Fatality.Colors.Black
+		AutoLoadValueFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		AutoLoadValueFrame.BorderSizePixel = 0
+		AutoLoadValueFrame.Position = UDim2.new(1, -3, 0.5, 0)
+		AutoLoadValueFrame.Size = UDim2.new(0.899999976, 0, 0.899999976, 0)
+		AutoLoadValueFrame.SizeConstraint = Enum.SizeConstraint.RelativeYY
+		AutoLoadValueFrame.ZIndex = 103
+		AutoLoadValueFrame.BackgroundTransparency = 0
+		AutoLoadValueFrame:SetAttribute("ConfigPageElement", true)
 
-		AutoLoadToggleCorner.CornerRadius = UDim.new(0, 7)
-		AutoLoadToggleCorner.Parent = AutoLoadToggleBox
+		AutoLoadUICorner.CornerRadius = UDim.new(0, 2)
+		AutoLoadUICorner.Parent = AutoLoadValueFrame
 
-		AutoLoadToggleIndicator.Name = Fatality:RandomString()
-		AutoLoadToggleIndicator.Parent = AutoLoadToggleBox
-		AutoLoadToggleIndicator.AnchorPoint = Vector2.new(0, 0.5)
-		AutoLoadToggleIndicator.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-		AutoLoadToggleIndicator.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		AutoLoadToggleIndicator.BorderSizePixel = 0
-		AutoLoadToggleIndicator.Position = UDim2.new(0, 2, 0.5, 0)
-		AutoLoadToggleIndicator.Size = UDim2.new(0, 11, 0, 11)
-		AutoLoadToggleIndicator.ZIndex = 104
-
-		AutoLoadToggleIndicatorCorner.CornerRadius = UDim.new(1, 0)
-		AutoLoadToggleIndicatorCorner.Parent = AutoLoadToggleIndicator
+		AutoLoadValueIcon.Name = Fatality:RandomString()
+		AutoLoadValueIcon.Parent = AutoLoadValueFrame
+		AutoLoadValueIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+		AutoLoadValueIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		AutoLoadValueIcon.BackgroundTransparency = 1.000
+		AutoLoadValueIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		AutoLoadValueIcon.BorderSizePixel = 0
+		AutoLoadValueIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+		AutoLoadValueIcon.Size = UDim2.new(0.699999988, 0, 0.699999988, 0)
+		AutoLoadValueIcon.ZIndex = 104
+		AutoLoadValueIcon.Image = "rbxassetid://10709790644"
+		AutoLoadValueIcon.ImageTransparency = 1
 
 		AutoLoadToggleButton.Name = Fatality:RandomString()
 		AutoLoadToggleButton.Parent = AutoLoadToggleFrame
@@ -6319,32 +6364,35 @@ function Fatality.new(Window: Window)
 		AutoLoadToggleButton.Text = ""
 		AutoLoadToggleButton.TextTransparency = 1
 
-		local function UpdateAutoLoadToggle(value)
-			AutoLoadEnabled = value;
+		local toggleImg = function(value)
 			if value then
-				Fatality:CreateAnimation(AutoLoadToggleIndicator, 0.3, {
-					Position = UDim2.new(1, -13, 0.5, 0),
-					BackgroundColor3 = Fatality.Colors.Main
-				})
-				Fatality:CreateAnimation(AutoLoadToggleBox, 0.3, {
-					BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+				Fatality:CreateAnimation(AutoLoadValueIcon, 0.45, {
+					ImageTransparency = 0,
+					ImageColor3 = Fatality.Colors.Main,
+					Size = UDim2.new(0.8, 0, 0.8, 0),
+					Rotation = 0,
 				})
 			else
-				Fatality:CreateAnimation(AutoLoadToggleIndicator, 0.3, {
-					Position = UDim2.new(0, 2, 0.5, 0),
-					BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-				})
-				Fatality:CreateAnimation(AutoLoadToggleBox, 0.3, {
-					BackgroundColor3 = Fatality.Colors.Black
+				Fatality:CreateAnimation(AutoLoadValueIcon, 0.45, {
+					ImageTransparency = 1,
+					ImageColor3 = Color3.fromRGB(255, 255, 255),
+					Size = UDim2.new(0.699999988, 0, 0.699999988, 0),
+					Rotation = 15
 				})
 			end
 		end
 
 		AutoLoadToggleButton.MouseButton1Click:Connect(function()
-			UpdateAutoLoadToggle(not AutoLoadEnabled);
+			AutoLoadEnabled = not AutoLoadEnabled;
+			toggleImg(AutoLoadEnabled);
 		end)
 
-		AutoLoadToggle = UpdateAutoLoadToggle;
+		AutoLoadToggle = function(value)
+			AutoLoadEnabled = value;
+			toggleImg(value);
+		end
+
+		toggleImg(false);
 
 		-- Config List (Right Side)
 		local ConfigListLabel = Instance.new("TextLabel")
@@ -6384,7 +6432,7 @@ function Fatality.new(Window: Window)
 		ConfigListCorner.CornerRadius = UDim.new(0, 2)
 		ConfigListCorner.Parent = ConfigListFrame
 
-		ConfigListStroke.Transparency = 0.750
+		ConfigListStroke.Transparency = 0.3
 		ConfigListStroke.Color = Color3.fromRGB(29, 29, 29)
 		ConfigListStroke.Parent = ConfigListFrame
 
@@ -6442,8 +6490,11 @@ function Fatality.new(Window: Window)
 					local spl = string.split(v, '/');
 					local name = spl[#spl];
 					if string.find(name, ".cfg", 1, true) then
-						-- Remove .cfg extension
+						-- Remove .cfg extension and get only the filename
 						local configName = string.gsub(name, ".cfg", "");
+						-- Remove path if present (just get the filename)
+						local nameParts = string.split(configName, '/');
+						configName = nameParts[#nameParts];
 						table.insert(configFiles, configName);
 					end
 				end
@@ -6453,6 +6504,7 @@ function Fatality.new(Window: Window)
 			for _, configName in pairs(configFiles) do
 				local ConfigItem = Instance.new("Frame")
 				local UICorner_Item = Instance.new("UICorner")
+				local ConfigItemStroke = Instance.new("UIStroke")
 				local ConfigItemName = Instance.new("TextLabel")
 				local ConfigItemButton = Instance.new("TextButton")
 
@@ -6466,6 +6518,10 @@ function Fatality.new(Window: Window)
 
 				UICorner_Item.CornerRadius = UDim.new(0, 2)
 				UICorner_Item.Parent = ConfigItem
+
+				ConfigItemStroke.Transparency = 0.3
+				ConfigItemStroke.Color = Color3.fromRGB(29, 29, 29)
+				ConfigItemStroke.Parent = ConfigItem
 
 				ConfigItemName.Name = Fatality:RandomString()
 				ConfigItemName.Parent = ConfigItem
@@ -6560,12 +6616,27 @@ function Fatality.new(Window: Window)
 
 				-- Show all children
 				for _, child in pairs(ConfigPageFrame:GetDescendants()) do
-					if child:IsA("TextLabel") or child:IsA("TextBox") or child:IsA("TextButton") or child:IsA("Frame") then
+					if child:IsA("TextLabel") or child:IsA("TextBox") or child:IsA("TextButton") or child:IsA("Frame") or child:IsA("ImageLabel") then
 						if child:GetAttribute("ConfigPageElement") then
-							Fatality:CreateAnimation(child, 0.5, {
-								TextTransparency = (child:IsA("TextLabel") and 0.2) or (child:IsA("TextBox") and 0) or 1,
-								BackgroundTransparency = (child:IsA("Frame") and child.BackgroundTransparency < 1 and 0) or 1
-							})
+							if child:IsA("TextBox") then
+								-- Keep text fully visible
+								child.TextTransparency = 0
+								Fatality:CreateAnimation(child, 0.5, {
+									TextTransparency = 0
+								})
+							elseif child:IsA("TextLabel") then
+								Fatality:CreateAnimation(child, 0.5, {
+									TextTransparency = 0.2
+								})
+							elseif child:IsA("ImageLabel") then
+								Fatality:CreateAnimation(child, 0.5, {
+									ImageTransparency = 0.2
+								})
+							elseif child:IsA("Frame") then
+								Fatality:CreateAnimation(child, 0.5, {
+									BackgroundTransparency = (child.BackgroundTransparency < 1 and 0) or 1
+								})
+							end
 						end
 					end
 				end
@@ -6592,6 +6663,10 @@ function Fatality.new(Window: Window)
 						if child:IsA("TextLabel") or child:IsA("TextBox") then
 							Fatality:CreateAnimation(child, 0.5, {
 								TextTransparency = 1
+							})
+						elseif child:IsA("ImageLabel") then
+							Fatality:CreateAnimation(child, 0.5, {
+								ImageTransparency = 1
 							})
 						elseif child:IsA("Frame") then
 							Fatality:CreateAnimation(child, 0.5, {
