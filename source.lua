@@ -4143,6 +4143,7 @@ function Fatality.new(Window: Window)
 	};
 	
 	local ConfigPageFrame = nil; -- Will be set later
+	local ConfigPageToggle = nil; -- Will be defined after all elements are created
 
 	Fatal.Notifier = Fatality.__NOTIFIER_CACHE or Fatality:CreateNotifier();
 
@@ -4363,9 +4364,14 @@ function Fatality.new(Window: Window)
 				BackgroundTransparency = 1,
 			})
 
-			-- Close Config Page if open
-			if ConfigPageFrame and ConfigPageFrame.Size.Y.Offset > 0 then
-				ConfigPageToggle(false);
+			-- Close Config Page if open (with proper check)
+			if ConfigPageFrame and ConfigPageToggle then
+				local isOpen = ConfigPageFrame.Size.Y.Offset > 0;
+				if isOpen then
+					ConfigPageToggle(false);
+					-- Wait a bit for the animation to start
+					task.wait(0.1);
+				end
 			end
 
 			Fatality:CreateAnimation(FatalFrame,0.75,{
@@ -5922,7 +5928,6 @@ function Fatality.new(Window: Window)
 		Fatality:AddDragBlacklist(ConfigPageFrame);
 
 		local RefreshConfigList = nil; -- Will be defined after ConfigListScrolling is created
-		local ConfigPageToggle = nil; -- Will be defined after all elements are created
 
 		ConfigPageFrame.Name = Fatality:RandomString()
 		ConfigPageFrame.Parent = Fatalitywin;
@@ -6314,7 +6319,7 @@ function Fatality.new(Window: Window)
 		AutoLoadToggleName.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		AutoLoadToggleName.BorderSizePixel = 0
 		AutoLoadToggleName.Position = UDim2.new(0, 0, 0.5, 0)
-		AutoLoadToggleName.Size = UDim2.new(1, 0, 0.800000012, 0)
+		AutoLoadToggleName.Size = UDim2.new(1, -30, 0.800000012, 0)
 		AutoLoadToggleName.ZIndex = 103
 		AutoLoadToggleName.FontFace = Fatality.FontSemiBold
 		AutoLoadToggleName.Text = "Auto Load"
@@ -6331,8 +6336,7 @@ function Fatality.new(Window: Window)
 		AutoLoadValueFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		AutoLoadValueFrame.BorderSizePixel = 0
 		AutoLoadValueFrame.Position = UDim2.new(1, -3, 0.5, 0)
-		AutoLoadValueFrame.Size = UDim2.new(0.899999976, 0, 0.899999976, 0)
-		AutoLoadValueFrame.SizeConstraint = Enum.SizeConstraint.RelativeYY
+		AutoLoadValueFrame.Size = UDim2.new(0, 28, 0, 15)
 		AutoLoadValueFrame.ZIndex = 103
 		AutoLoadValueFrame.BackgroundTransparency = 0
 		AutoLoadValueFrame:SetAttribute("ConfigPageElement", true)
@@ -6349,6 +6353,7 @@ function Fatality.new(Window: Window)
 		AutoLoadValueIcon.BorderSizePixel = 0
 		AutoLoadValueIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
 		AutoLoadValueIcon.Size = UDim2.new(0.699999988, 0, 0.699999988, 0)
+		AutoLoadValueIcon.SizeConstraint = Enum.SizeConstraint.RelativeYY
 		AutoLoadValueIcon.ZIndex = 104
 		AutoLoadValueIcon.Image = "rbxassetid://10709790644"
 		AutoLoadValueIcon.ImageTransparency = 1
@@ -6487,14 +6492,18 @@ function Fatality.new(Window: Window)
 			
 			if success and files then
 				for i, v in next, files do
-					local spl = string.split(v, '/');
-					local name = spl[#spl];
-					if string.find(name, ".cfg", 1, true) then
-						-- Remove .cfg extension and get only the filename
-						local configName = string.gsub(name, ".cfg", "");
-						-- Remove path if present (just get the filename)
-						local nameParts = string.split(configName, '/');
-						configName = nameParts[#nameParts];
+					-- v is the full path, extract just the filename
+					local pathParts = string.split(v, '/');
+					local pathParts2 = string.split(v, '\\');
+					local fileName = pathParts[#pathParts];
+					if #pathParts2 > #pathParts then
+						fileName = pathParts2[#pathParts2];
+					end
+					
+					-- Check if it's a .cfg file
+					if string.find(fileName, ".cfg", 1, true) then
+						-- Remove .cfg extension to get just the name
+						local configName = string.gsub(fileName, ".cfg", "");
 						table.insert(configFiles, configName);
 					end
 				end
@@ -6633,9 +6642,16 @@ function Fatality.new(Window: Window)
 									ImageTransparency = 0.2
 								})
 							elseif child:IsA("Frame") then
-								Fatality:CreateAnimation(child, 0.5, {
-									BackgroundTransparency = (child.BackgroundTransparency < 1 and 0) or 1
-								})
+								-- Preserve toggle value frame background
+								if child == AutoLoadValueFrame then
+									Fatality:CreateAnimation(child, 0.5, {
+										BackgroundTransparency = 0
+									})
+								else
+									Fatality:CreateAnimation(child, 0.5, {
+										BackgroundTransparency = (child.BackgroundTransparency < 1 and 0) or 1
+									})
+								end
 							end
 						end
 					end
@@ -6669,9 +6685,12 @@ function Fatality.new(Window: Window)
 								ImageTransparency = 1
 							})
 						elseif child:IsA("Frame") then
-							Fatality:CreateAnimation(child, 0.5, {
-								BackgroundTransparency = 1
-							})
+							-- Don't hide toggle value frame background
+							if child ~= AutoLoadValueFrame then
+								Fatality:CreateAnimation(child, 0.5, {
+									BackgroundTransparency = 1
+								})
+							end
 						end
 					end
 				end
